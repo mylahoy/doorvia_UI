@@ -1,0 +1,65 @@
+.brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  color: #edf3ff;
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.brand-mark {
+  width: 36px;
+  height: 36px;
+  position: relative;
+  display: inline-block;
+  flex: 0 0 36px;
+  border: 2px solid #f8d38a;
+  border-radius: 10px 10px 7px 7px;
+  background: linear-gradient(145deg, #ffb36b, #ff7a3d);
+  box-shadow: 0 0 22px rgba(255, 159, 90, 0.32), inset 0 -5px 10px rgba(120, 35, 12, 0.18);
+}
+
+.brand-mark::before {
+  content: "";
+  position: absolute;
+  inset: 6px 8px 5px;
+  border: 2px solid rgba(255, 248, 222, 0.78);
+  border-bottom-width: 3px;
+  border-radius: 3px 3px 1px 1px;
+}
+
+.brand-mark::after {
+  content: "";
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  right: 11px;
+  top: 16px;
+  border-radius: 50%;
+  background: #fff2c9;
+  box-shadow: 0 0 5px rgba(255, 242, 201, 0.9);
+}
+
+.brand-name {
+  display: block;
+  font-size: 1.35rem;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-weight: 700;
+}
+
+.brand-name span {
+  color: #ff9f5a;
+}
+
+.brand-kicker {
+  display: block;
+  margin-top: 5px;
+  color: #a3b9ce;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}

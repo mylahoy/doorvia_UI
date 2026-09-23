@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="refresh" content="0; url=userlogin.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DoorVia</title>
+  <link rel="stylesheet" href="chat.css" />
+  <link rel="stylesheet" href="brand.css" />
+ 
+  <style>
+    :root {
+      --bg-1: #07131d;
+      --bg-2: #101d2d;
+      --card: rgba(15, 24, 35, 0.8);
+      --line: rgba(255,255,255,0.09);
+      --text: #edf3ff;
+      --muted: #a3b9ce;
+      --orange: #ff9f5a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(138, 124, 248, 0.18), transparent 28%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      color: var(--text);
+      padding: 24px;
+    }
+
+    .loader-card {
+      width: min(420px, 100%);
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 28px 24px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+    }
+
+    p {
+      margin: 0;
+      opacity: 0.9;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--muted);
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--orange), #ffd39a);
+      display: inline-block;
+      margin: 18px auto 0;
+      box-shadow: 0 0 20px rgba(255, 159, 90, 0.7);
+      animation: pulse 1.3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(0.9); opacity: 0.6; }
+      50% { transform: scale(1.2); opacity: 1; }
+    }
+  </style>
+</head>
+<body data-chat-page="loader">
+  <div class="loader-card">
+    <div class="brand-lockup" aria-label="DoorVia">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span><strong class="brand-name">Door<span>Via</span></strong><small class="brand-kicker">Secure access, simply</small></span>
+    </div>
+    <p>Loading DoorVia...</p>
+    <span class="dot"></span>
+  </div>
+  <script src="chat.js"></script>
+</body>
+</html>
