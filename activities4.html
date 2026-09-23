@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Activity Dashboard</title>
+  <link rel="stylesheet" href="chat.css" />
+  <link rel="stylesheet" href="brand.css" />
+  <style>
+    :root {
+      --bg-1: #07131d;
+      --bg-2: #101d2d;
+      --bg-3: #1d2b39;
+      --card: rgba(15, 24, 35, 0.8);
+      --card-strong: rgba(18, 30, 41, 0.95);
+      --line: rgba(255,255,255,0.09);
+      --text: #eef5ff;
+      --muted: #a3b9ce;
+      --gold: #f7d38b;
+      --orange: #ff9f5a;
+      --purple: #8a7cf8;
+      --green: #6fe6ae;
+      --red: #ff7a7a;
+      --shadow: 0 24px 60px rgba(2, 8, 16, 0.46);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background:
+        radial-gradient(circle at top left, rgba(138, 124, 248, 0.22), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(255, 159, 90, 0.18), transparent 34%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 52%, var(--bg-3));
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+      padding: 24px;
+    }
+
+    .app {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      background: rgba(7, 15, 23, 0.72);
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      padding: 26px;
+      backdrop-filter: blur(10px);
+      text-align: center;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .topbar-left {
+      flex: 1;
+      text-align: left;
+    }
+
+    .topbar-right {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 2.6vw, 3rem);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff, #dfe9ff 35%, #ffda9e 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 10px 14px;
+      border: 1px solid rgba(111, 230, 174, 0.28);
+      background: rgba(111, 230, 174, 0.1);
+      color: var(--green);
+      font-size: 0.72rem;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      font-weight: 700;
+      box-shadow: inset 0 0 12px rgba(111, 230, 174, 0.08);
+    }
+    .status::before {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 12px rgba(111, 230, 174, 0.9);
+      display: block;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.3fr 0.7fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(17, 28, 38, 0.96), rgba(12, 20, 29, 0.92));
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 20px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    }
+
+    .card h2 {
+      margin: 0 0 16px;
+      font-size: 0.9rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+      align-items: stretch;
+      justify-items: center;
+    }
+
+    .metric {
+      width: 100%;
+      text-align: center;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .value {
+      font-size: clamp(1.5rem, 2vw, 2.2rem);
+      font-weight: 700;
+    }
+
+    .activity-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 12px;
+    }
+
+    .activity-list li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: var(--text);
+      text-align: center;
+    }
+
+    .activity-list li span:first-child {
+      flex: 1;
+      text-align: center;
+    }
+
+    .tag {
+      padding: 6px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .tag.access { background: rgba(111,230,174,0.12); color: var(--green); }
+    .tag.alert { background: rgba(255,122,122,0.12); color: #ff9d9d; }
+    .tag.info { background: rgba(138,124,248,0.12); color: #b9adff; }
+
+    .side-panel {
+      display: grid;
+      gap: 18px;
+    }
+
+    .door-box {
+      background: linear-gradient(180deg, rgba(138, 124, 248, 0.12), rgba(255,255,255,0.02));
+      border: 1px solid rgba(138,124,248,0.22);
+      border-radius: 20px;
+      padding: 18px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+
+    .door-state {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .door-state .lock {
+      color: var(--green);
+    }
+
+    .door-state .unlock {
+      color: var(--orange);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+      justify-items: center;
+      align-items: center;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 15px;
+      cursor: pointer;
+      font-weight: 700;
+      font: inherit;
+      transition: transform 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--orange), #ffd39a);
+      color: #1a120d;
+      box-shadow: 0 12px 24px rgba(255, 159, 90, 0.22);
+    }
+
+    .ghost {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.09);
+      color: var(--text);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+
+    .button-active {
+      box-shadow: 0 0 0 2px rgba(255, 211, 150, 0.28), 0 12px 24px rgba(255, 159, 90, 0.16);
+      opacity: 1;
+    }
+
+    @media (max-width: 850px) {
+      .grid, .hero { grid-template-columns: 1fr; }
+      .button-row { grid-template-columns: 1fr; }
+      .app { padding: 18px; }
+    }
+  </style>
+</head>
+<body data-chat-page="activity">
+  <div class="app">
+    <div class="brand-lockup" aria-label="DoorVia">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span><strong class="brand-name">Door<span>Via</span></strong><small class="brand-kicker">Secure access, simply</small></span>
+    </div>
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>DoorVia Activity</h1>
+      </div>
+      <div class="topbar-right">
+        <button class="ghost" type="button" onclick="window.location.href='userlogin.html'">Home</button>
+        <div class="status">System Active</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Recent Activity</h2>
+
+        <div class="hero">
+          <div class="metric">
+            <div class="label">Access Today</div>
+            <div id="accessTodayCount" class="value">0</div>
+          </div>
+          <div class="metric">
+            <div class="label">Denied</div>
+            <div class="value">0</div>
+          </div>
+          <div class="metric">
+            <div class="label">Door State</div>
+            <div class="value">Locked</div>
+          </div>
+        </div>
+
+        <ul class="activity-list">
+          <li>
+            <span id="residentAccessList">Resident access granted — No approved residents</span>
+            <span class="tag access">Access</span>
+          </li>
+          <li>
+            <span id="lastUserSummary">Last user — No recent access</span>
+            <span class="tag info">Resident</span>
+          </li>
+          <li>
+            <span id="approvedResidentsSummary">Admin approved — No records</span>
+            <span class="tag access">Approved</span>
+          </li>
+          <li>
+            <span>Access denied — unknown PIN</span>
+            <span class="tag alert">Alert</span>
+          </li>
+          <li>
+            <span id="doorLockTimeLabel">Door locked at --:--</span>
+            <span class="tag info">System</span>
+          </li>
+        </ul>
+      </section>
+
+      <aside class="side-panel">
+        <section class="card door-box">
+          <h2>Main Door</h2>
+          <div class="door-state">
+            <span>Front entry</span>
+            <span id="doorStateLabel" class="lock">Locked</span>
+          </div>
+          <div class="button-row">
+            <button id="unlockButton" class="primary button-active" type="button" aria-pressed="false">Unlock</button>
+            <button id="lockButton" class="ghost" type="button" aria-pressed="true">Lock</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Alerts</h2>
+          <ul class="activity-list">
+            <li><span>Battery check passed</span><span class="tag info">OK</span></li>
+            <li><span>Door sensor stable</span><span class="tag access">Normal</span></li>
+          </ul>
+        </section>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'doorviaUsers';
+    const DOOR_STATE_KEY = 'doorviaDoorState';
+    const DOOR_LOCK_TIME_KEY = 'doorviaLockTime';
+    const LAST_USER_KEY = 'doorviaLastUser';
+
+    const doorStateLabel = document.getElementById('doorStateLabel');
+    const unlockButton = document.getElementById('unlockButton');
+    const lockButton = document.getElementById('lockButton');
+    const accessTodayCount = document.getElementById('accessTodayCount');
+    const residentAccessList = document.getElementById('residentAccessList');
+    const approvedResidentsSummary = document.getElementById('approvedResidentsSummary');
+    const lastUserSummary = document.getElementById('lastUserSummary');
+    const doorLockTimeLabel = document.getElementById('doorLockTimeLabel');
+
+    function getUsers() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function updateResidentAccess() {
+      const users = getUsers();
+      const approvedResidents = users.filter(user => user.role !== 'admin' && user.status === 'approved');
+
+      if (!approvedResidents.length) {
+        residentAccessList.textContent = 'Resident access granted — No approved residents';
+        approvedResidentsSummary.textContent = 'Admin approved — No records';
+        accessTodayCount.textContent = '0';
+        return;
+      }
+
+      const names = approvedResidents.map(user => user.name);
+      residentAccessList.textContent = `Resident access granted — ${names.join(', ')}`;
+      approvedResidentsSummary.textContent = `Admin approved — ${names.join(', ')}`;
+      accessTodayCount.textContent = String(approvedResidents.length);
+    }
+
+    function formatTime(date) {
+      return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function updateLastUser() {
+      const lastUser = localStorage.getItem(LAST_USER_KEY);
+      if (!lastUser) {
+        lastUserSummary.textContent = 'Last user — No recent access';
+        return;
+      }
+
+      lastUserSummary.textContent = `Last user — ${lastUser}`;
+    }
+
+    function updateLockTime() {
+      const savedLockTime = localStorage.getItem(DOOR_LOCK_TIME_KEY);
+      const displayTime = savedLockTime ? formatTime(savedLockTime) : '--:--';
+      doorLockTimeLabel.textContent = `Door locked at ${displayTime}`;
+    }
+
+    function setDoorState(isLocked) {
+      const lockedText = isLocked ? 'Locked' : 'Unlocked';
+      doorStateLabel.textContent = lockedText;
+      doorStateLabel.classList.toggle('lock', isLocked);
+      doorStateLabel.classList.toggle('unlock', !isLocked);
+
+      unlockButton.classList.toggle('button-active', !isLocked);
+      lockButton.classList.toggle('button-active', isLocked);
+
+      unlockButton.setAttribute('aria-pressed', String(!isLocked));
+      lockButton.setAttribute('aria-pressed', String(isLocked));
+
+      localStorage.setItem(DOOR_STATE_KEY, String(isLocked));
+
+      if (isLocked) {
+        const now = new Date().toISOString();
+        localStorage.setItem(DOOR_LOCK_TIME_KEY, now);
+        updateLockTime();
+      }
+    }
+
+    function applySavedDoorState() {
+      const savedState = localStorage.getItem(DOOR_STATE_KEY);
+      const isLocked = savedState === null ? true : savedState === 'true';
+      setDoorState(isLocked);
+    }
+
+    unlockButton.addEventListener('click', () => {
+      localStorage.setItem(LAST_USER_KEY, 'Unlocked manually');
+      updateLastUser();
+      setDoorState(false);
+    });
+
+    lockButton.addEventListener('click', () => {
+      localStorage.setItem(LAST_USER_KEY, 'Locked manually');
+      updateLastUser();
+      setDoorState(true);
+    });
+
+    const users = getUsers();
+    if (users.length) {
+      const lastApproved = [...users]
+        .filter(user => user.role !== 'admin' && user.status === 'approved')
+        .pop();
+
+      if (lastApproved) {
+        localStorage.setItem(LAST_USER_KEY, lastApproved.name);
+      }
+    }
+
+    updateResidentAccess();
+    updateLastUser();
+    updateLockTime();
+    applySavedDoorState();
+  </script>
+  <script src="chat.js"></script>
+</body>
+</html>
