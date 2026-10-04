@@ -26,12 +26,27 @@
   const lockBtn = document.getElementById('lockButton');
 
   // New "Live door log" section under the existing activity list
-  const logTitle = document.createElement('h2');
-  logTitle.textContent = 'Live door log';
-  logTitle.style.margin = '22px 0 12px';
+  const logStyle = document.createElement('style');
+  logStyle.textContent =
+    '.log-details { margin-top: 22px; }' +
+    '.log-details summary { cursor: pointer; list-style: none; text-align: center;' +
+    '  color: var(--gold); font-size: 0.9rem; letter-spacing: 0.08em; text-transform: uppercase;' +
+    '  font-weight: 700; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px;' +
+    '  background: rgba(255,255,255,0.035); }' +
+    '.log-details summary::-webkit-details-marker { display: none; }' +
+    '.log-details summary::after { content: "\\25BE"; margin-left: 8px; }' +
+    '.log-details[open] summary::after { content: "\\25B4"; }' +
+    '.log-details .activity-list { margin-top: 12px; max-height: 340px; overflow-y: auto; }';
+  document.head.appendChild(logStyle);
+
+  const logDetails = document.createElement('details');
+  logDetails.className = 'log-details';          // closed by default
+  const logSummary = document.createElement('summary');
+  logSummary.textContent = 'Live door log';
   const logList = document.createElement('ul');
   logList.className = 'activity-list';
-  mainCard.append(logTitle, logList);
+  logDetails.append(logSummary, logList);
+  mainCard.appendChild(logDetails);
 
   function timeOf(ts) {
     return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -99,6 +114,7 @@
     lockTimeEl.textContent = 'Door closed at ' + (lastClosed ? timeOf(lastClosed.ts) : '--:--');
 
     // Live log (newest first)
+    logSummary.textContent = 'Live door log (' + Math.min(events.length, 15) + ')';
     logList.innerHTML = '';
     if (!events.length) {
       logList.appendChild(row('No door events yet', '--', 'info'));
