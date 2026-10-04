@@ -124,6 +124,17 @@ if (page === 'admin') {
   addLogout();
   let residents = {};
 
+  // User management and the lists are only shown to the logged-in admin
+  const adminSections = [
+    $('pendingUserSelect').closest('.panel'),
+    $('approvedUserList').closest('.data-box'),
+    $('userList').closest('.data-box')
+  ];
+  function showAdmin(show) {
+    adminSections.forEach(el => { if (el) el.style.display = show ? '' : 'none'; });
+  }
+  showAdmin(false);
+
   function fill(id, entries, empty) {
     const list = $(id);
     list.innerHTML = '';
@@ -179,6 +190,7 @@ if (page === 'admin') {
       }
       $('adminPin').value = '';
       msg('adminMessage', 'Admin panel unlocked.', 'success');
+      showAdmin(true);
       await loadUsers();
     } catch (e) { msg('adminMessage', friendly(e), 'error'); }
   };
@@ -211,7 +223,10 @@ if (page === 'admin') {
   onAuthStateChanged(auth, u => {
     if (u && u.uid === ADMIN_UID) {
       msg('adminMessage', 'Signed in as admin.', 'success');
+      showAdmin(true);
       loadUsers().catch(e => msg('adminMessage', friendly(e), 'error'));
+    } else {
+      showAdmin(false);
     }
   });
 }
