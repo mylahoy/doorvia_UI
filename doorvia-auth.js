@@ -32,7 +32,7 @@ function msg(id, text, type) {
 function friendly(e) {
   const c = (e.code || '') + ' ' + (e.message || '');
   if (c.includes('email-already-in-use')) return 'That email is already registered.';
-  if (c.includes('weak-password')) return 'Password must be at least 6 characters.';
+  if (c.includes('weak-password')) return 'Password must be 6 to 10 characters.';
   if (c.includes('invalid-email')) return 'Enter a valid email address.';
   if (c.includes('invalid-credential') || c.includes('wrong-password') || c.includes('user-not-found'))
     return 'Email or password is incorrect.';
@@ -70,7 +70,8 @@ if (page === 'login') {
   emailField.innerHTML = '<label for="createEmail">Email</label>' +
     '<input id="createEmail" type="email" placeholder="name@example.com" />';
   $('createName').closest('.field').after(emailField);
-  relabel('createPin', 'Password', 'At least 6 characters', 'password');
+  relabel('createPin', 'Password', '6 to 10 characters', 'password');
+  $('createPin').maxLength = 10;
   $('createRole').closest('.field').style.display = 'none';       // residents only; one admin
   $('createPin').closest('.two-up').style.gridTemplateColumns = '1fr';
   relabel('loginName', 'Email or admin username', 'name@example.com', 'text');
@@ -84,7 +85,7 @@ if (page === 'login') {
     const pw = $('createPin').value;
     if (!name) return msg('createMessage', 'Please add the resident name.', 'error');
     if (!email) return msg('createMessage', 'Please add an email address.', 'error');
-    if (pw.length < 6) return msg('createMessage', 'Password must be at least 6 characters.', 'error');
+    if (pw.length < 6 || pw.length > 10) return msg('createMessage', 'Password must be 6 to 10 characters.', 'error');
     try {
       msg('createMessage', 'Creating account...', '');
       const cred = await createUserWithEmailAndPassword(auth, email, pw);
@@ -135,8 +136,8 @@ if (page === 'admin') {
   pinPanel.innerHTML =
     '<h2>Change Admin PIN</h2>' +
     '<div class="field"><label for="curPin">Current PIN</label><input id="curPin" type="password" placeholder="Current PIN" /></div>' +
-    '<div class="field"><label for="newPin">New PIN (6 or more characters)</label><input id="newPin" type="password" placeholder="New PIN" /></div>' +
-    '<div class="field"><label for="newPin2">Repeat new PIN</label><input id="newPin2" type="password" placeholder="Repeat new PIN" /></div>' +
+    '<div class="field"><label for="newPin">New PIN (6 to 10 characters)</label><input id="newPin" type="password" maxlength="10" placeholder="New PIN" /></div>' +
+    '<div class="field"><label for="newPin2">Repeat new PIN</label><input id="newPin2" type="password" maxlength="10" placeholder="Repeat new PIN" /></div>' +
     '<button class="primary" type="button" id="changePinBtn">Change PIN</button>' +
     '<div id="pinMessage" class="message" aria-live="polite"></div>';
   $('pendingUserSelect').closest('.panel').after(pinPanel);
@@ -239,7 +240,7 @@ if (page === 'admin') {
     const cur = $('curPin').value, n1 = $('newPin').value, n2 = $('newPin2').value;
     const u = auth.currentUser;
     if (!u || u.uid !== ADMIN_UID) return msg('pinMessage', 'Please log in as admin first.', 'error');
-    if (n1.length < 6) return msg('pinMessage', 'New PIN must be at least 6 characters.', 'error');
+    if (n1.length < 6 || n1.length > 10) return msg('pinMessage', 'New PIN must be 6 to 10 characters.', 'error');
     if (n1 !== n2) return msg('pinMessage', 'The new PINs do not match.', 'error');
     try {
       await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, cur));
