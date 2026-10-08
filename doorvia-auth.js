@@ -5,11 +5,12 @@
 */
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-         sendEmailVerification, signOut, onAuthStateChanged }
+         sendEmailVerification, signOut, onAuthStateChanged,
+         updatePassword, reauthenticateWithCredential, EmailAuthProvider }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getDatabase, ref, get, set, update, remove }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-import { firebaseConfig, ADMIN_UID, ADMIN_USERNAME, ADMIN_LOGIN_EMAIL } from './firebase-config.js';
+import { firebaseConfig, ADMIN_UID, ADMIN_USERNAME, ADMIN_LOGIN_EMAIL } from './firebase-config.js?v=5';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -127,7 +128,20 @@ if (page === 'admin') {
   let residents = {};
 
   // User management and the lists are only shown to the logged-in admin
+  // "Change PIN" panel (built here so the page needs no edits)
+  const pinPanel = document.createElement('section');
+  pinPanel.className = 'panel';
+  pinPanel.style.marginTop = '20px';
+  pinPanel.innerHTML =
+    '<h2>Change Admin PIN</h2>' +
+    '<div class="field"><label for="curPin">Current PIN</label><input id="curPin" type="password" placeholder="Current PIN" /></div>' +
+    '<div class="field"><label for="newPin">New PIN (6 or more characters)</label><input id="newPin" type="password" placeholder="New PIN" /></div>' +
+    '<div class="field"><label for="newPin2">Repeat new PIN</label><input id="newPin2" type="password" placeholder="Repeat new PIN" /></div>' +
+    '<button class="primary" type="button" id="changePinBtn">Change PIN</button>' +
+    '<div id="pinMessage" class="message" aria-live="polite"></div>';
+  $('pendingUserSelect').closest('.panel').after(pinPanel);
   const adminSections = [
+    pinPanel,
     $('pendingUserSelect').closest('.panel'),
     $('approvedUserList').closest('.data-box'),
     $('userList').closest('.data-box')
@@ -219,6 +233,20 @@ if (page === 'admin') {
       render();
       msg('adminMessage', name + ' was removed.', 'success');
     } catch (e) { msg('adminMessage', friendly(e), 'error'); }
+  };
+
+  $('changePinBtn').onclick = async () => {
+    const cur = $('curPin').value, n1 = $('newPin').value, n2 = $('newPin2').value;
+    const u = auth.currentUser;
+    if (!u || u.uid !== ADMIN_UID) return msg('pinMessage', 'Please log in as admin first.', 'error');
+    if (n1.length < 6) return msg('pinMessage', 'New PIN must be at least 6 characters.', 'error');
+    if (n1 !== n2) return msg('pinMessage', 'The new PINs do not match.', 'error');
+    try {
+      await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, cur));
+      await updatePassword(u, n1);
+      ['curPin', 'newPin', 'newPin2'].forEach(id => { $(id).value = ''; });
+      msg('pinMessage', 'PIN changed. Use the new PIN next time you log in.', 'success');
+    } catch (e) { msg('pinMessage', friendly(e), 'error'); }
   };
 
   render();
