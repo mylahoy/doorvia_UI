@@ -10,7 +10,7 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getDatabase, ref, get, set, update, remove }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-import { firebaseConfig, ADMIN_UID, ADMIN_USERNAME, ADMIN_LOGIN_EMAIL } from './firebase-config.js?v=6';
+import { firebaseConfig, ADMIN_UID, ADMIN_USERNAME, ADMIN_LOGIN_EMAIL } from './firebase-config.js?v=8';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
