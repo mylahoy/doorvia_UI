@@ -281,9 +281,18 @@
     }
 
     @media (max-width: 850px) {
-      .grid, .hero { grid-template-columns: 1fr; }
-      .button-row { grid-template-columns: 1fr; }
+      .grid { grid-template-columns: 1fr; }
       .app { padding: 18px; }
+      .topbar { align-items: flex-start; }
+      .topbar-left { flex: 1 1 100%; }
+      .topbar-right {
+        margin-left: 0;
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 560px) {
+      .hero, .button-row { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -487,7 +496,7 @@
   </script>
   <script src="doorvia-status.js"></script>
   <script src="doorvia-live.js"></script>
-<script type="module" src="doorvia-auth.js?v=8"></script>
+  <script type="module" src="doorvia-auth.js"></script>
   <script src="doorvia-tips.js"></script>
 </body>
 </html>
