@@ -5,22 +5,23 @@
 */
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-         sendEmailVerification, signOut, onAuthStateChanged,
-         updatePassword, reauthenticateWithCredential, EmailAuthProvider }
+         sendEmailVerification, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getDatabase, ref, get, set, update, remove }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-import { firebaseConfig, ADMIN_UID, ADMIN_USERNAME, ADMIN_LOGIN_EMAIL } from './firebase-config.js?v=8';
+import { firebaseConfig, ADMIN_UID } from './firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 const page = document.body.dataset.chatPage;
 const $ = id => document.getElementById(id);
-// Typing the admin username (e.g. "admin") logs in with the admin's private login address
-const loginId = v => (v.trim().toLowerCase() === ADMIN_USERNAME ? ADMIN_LOGIN_EMAIL : v.trim());
 
-localStorage.removeItem('doorviaUsers');   // old browser-only accounts (incl. default admin/1234)
+try {
+  localStorage.removeItem('doorviaUsers');
+} catch (error) {
+  console.error('Unable to clear legacy browser-only accounts:', error);
+}
 
 function msg(id, text, type) {
   const el = $(id);
@@ -32,7 +33,7 @@ function msg(id, text, type) {
 function friendly(e) {
   const c = (e.code || '') + ' ' + (e.message || '');
   if (c.includes('email-already-in-use')) return 'That email is already registered.';
-  if (c.includes('weak-password')) return 'Password must be 6 to 10 characters.';
+  if (c.includes('weak-password')) return 'Password must be at least 6 characters.';
   if (c.includes('invalid-email')) return 'Enter a valid email address.';
   if (c.includes('invalid-credential') || c.includes('wrong-password') || c.includes('user-not-found'))
     return 'Email or password is incorrect.';
@@ -40,6 +41,16 @@ function friendly(e) {
   if (c.includes('network')) return 'No internet connection.';
   if (c.includes('PERMISSION_DENIED')) return 'Not allowed by the database rules.';
   return e.message || 'Something went wrong.';
+}
+
+async function signOutSafely() {
+  try {
+    await signOut(auth);
+    return true;
+  } catch (error) {
+    console.error('Unable to clear the Firebase session:', error);
+    return false;
+  }
 }
 
 function relabel(id, label, placeholder, type) {
@@ -59,7 +70,13 @@ function addLogout() {
   b.className = 'ghost';
   b.type = 'button';
   b.textContent = 'Log out';
-  b.onclick = async () => { await signOut(auth); location.href = 'userlogin.html'; };
+  b.onclick = async () => {
+    if (await signOutSafely()) {
+      location.href = 'userlogin.html';
+    } else {
+      window.alert('Could not sign out. Please try again.');
+    }
+  };
   bar.appendChild(b);
 }
 
@@ -70,11 +87,10 @@ if (page === 'login') {
   emailField.innerHTML = '<label for="createEmail">Email</label>' +
     '<input id="createEmail" type="email" placeholder="name@example.com" />';
   $('createName').closest('.field').after(emailField);
-  relabel('createPin', 'Password', '6 to 10 characters', 'password');
-  $('createPin').maxLength = 10;
+  relabel('createPin', 'Password', 'At least 6 characters', 'password');
   $('createRole').closest('.field').style.display = 'none';       // residents only; one admin
   $('createPin').closest('.two-up').style.gridTemplateColumns = '1fr';
-  relabel('loginName', 'Email or admin username', 'name@example.com', 'text');
+  relabel('loginName', 'Email', 'name@example.com', 'email');
   relabel('loginPin', 'Password', 'Your password', 'password');
   const old = document.querySelector('.data-box');
   if (old) old.style.display = 'none';                            // no public user list
@@ -85,72 +101,91 @@ if (page === 'login') {
     const pw = $('createPin').value;
     if (!name) return msg('createMessage', 'Please add the resident name.', 'error');
     if (!email) return msg('createMessage', 'Please add an email address.', 'error');
-    if (pw.length < 6 || pw.length > 10) return msg('createMessage', 'Password must be 6 to 10 characters.', 'error');
+    if (pw.length < 6) return msg('createMessage', 'Password must be at least 6 characters.', 'error');
+    let accountCreated = false;
+    let profileSaved = false;
     try {
       msg('createMessage', 'Creating account...', '');
       const cred = await createUserWithEmailAndPassword(auth, email, pw);
+      accountCreated = true;
       await set(ref(db, 'users/' + cred.user.uid),
         { name, email, role: 'resident', status: 'pending', createdAt: Date.now() });
+      profileSaved = true;
       await sendEmailVerification(cred.user);
-      await signOut(auth);
+      if (!(await signOutSafely())) {
+        return msg('createMessage',
+          'Account created, but sign-out failed. Please try logging out before continuing.',
+          'error');
+      }
       ['createName', 'createEmail', 'createPin'].forEach(id => { $(id).value = ''; });
       msg('createMessage', 'Account created. A verification email was sent to ' + email +
         ' (check spam). Then wait for admin approval.', 'success');
-    } catch (e) { msg('createMessage', friendly(e), 'error'); }
+    } catch (e) {
+      if (accountCreated) {
+        const sessionCleared = await signOutSafely();
+        if (!profileSaved) {
+          console.error('Firebase account was created but its resident profile could not be saved:', e);
+          return msg('createMessage',
+            'The account was created, but setup could not finish. Contact the admin before trying to register again.' +
+              (sessionCleared ? '' : ' Sign out could not be confirmed; close this tab after noting this issue.'),
+            'error');
+        }
+        if (!sessionCleared) {
+          return msg('createMessage',
+            friendly(e) + ' Sign out could not be confirmed; close this tab after noting this issue.',
+            'error');
+        }
+      }
+      msg('createMessage', friendly(e), 'error');
+    }
   };
 
   window.loginUser = async () => {
     const email = $('loginName').value.trim();
     const pw = $('loginPin').value;
+    let authenticated = false;
     try {
-      const u = (await signInWithEmailAndPassword(auth, loginId(email), pw)).user;
+      const u = (await signInWithEmailAndPassword(auth, email, pw)).user;
+      authenticated = true;
       if (u.uid !== ADMIN_UID) {
         if (!u.emailVerified) {
-          await signOut(auth);
-          return msg('loginMessage', 'Please verify your email first (check your inbox and spam).', 'error');
+          const sessionCleared = await signOutSafely();
+          return msg('loginMessage',
+            'Please verify your email first (check your inbox and spam).' +
+              (sessionCleared ? '' : ' Sign out failed; close this tab before continuing.'),
+            'error');
         }
         const snap = await get(ref(db, 'users/' + u.uid));
         if (!snap.exists() || snap.val().status !== 'approved') {
-          await signOut(auth);
-          return msg('loginMessage', 'Your account is waiting for admin approval.', 'error');
+          const sessionCleared = await signOutSafely();
+          return msg('loginMessage',
+            'Your account is waiting for admin approval.' +
+              (sessionCleared ? '' : ' Sign out failed; close this tab before continuing.'),
+            'error');
         }
       }
       msg('loginMessage', 'Welcome. Access approved.', 'success');
       setTimeout(() => { location.href = 'activities4.html'; }, 400);
-    } catch (e) { msg('loginMessage', friendly(e), 'error'); }
+    } catch (e) {
+      const sessionCleared = authenticated ? await signOutSafely() : true;
+      msg('loginMessage',
+        friendly(e) + (sessionCleared ? '' : ' Sign out failed; close this tab before continuing.'),
+        'error');
+    }
   };
 }
 
 // ---------------- Admin page ----------------
 if (page === 'admin') {
-  relabel('adminName', 'Admin Username', 'admin', 'text');
-  relabel('adminPin', 'Admin PIN', '6 or more digits', 'password');
+  relabel('adminName', 'Admin Email', 'admin@example.com', 'email');
+  relabel('adminPin', 'Admin Password', 'Password', 'password');
   addLogout();
   let residents = {};
-
-  // User management and the lists are only shown to the logged-in admin
-  // "Change PIN" panel (built here so the page needs no edits)
-  const pinPanel = document.createElement('section');
-  pinPanel.className = 'panel';
-  pinPanel.style.marginTop = '20px';
-  pinPanel.innerHTML =
-    '<h2>Change Admin PIN</h2>' +
-    '<div class="field"><label for="curPin">Current PIN</label><input id="curPin" type="password" placeholder="Current PIN" /></div>' +
-    '<div class="field"><label for="newPin">New PIN (6 to 10 characters)</label><input id="newPin" type="password" maxlength="10" placeholder="New PIN" /></div>' +
-    '<div class="field"><label for="newPin2">Repeat new PIN</label><input id="newPin2" type="password" maxlength="10" placeholder="Repeat new PIN" /></div>' +
-    '<button class="primary" type="button" id="changePinBtn">Change PIN</button>' +
-    '<div id="pinMessage" class="message" aria-live="polite"></div>';
-  $('pendingUserSelect').closest('.panel').after(pinPanel);
-  const adminSections = [
-    pinPanel,
-    $('pendingUserSelect').closest('.panel'),
-    $('approvedUserList').closest('.data-box'),
-    $('userList').closest('.data-box')
-  ];
-  function showAdmin(show) {
-    adminSections.forEach(el => { if (el) el.style.display = show ? '' : 'none'; });
-  }
-  showAdmin(false);
+  const adminOnlyContent = document.querySelectorAll('[data-admin-only]');
+  const setAdminContentVisible = visible => {
+    adminOnlyContent.forEach(el => { el.hidden = !visible; });
+  };
+  setAdminContentVisible(false);
 
   function fill(id, entries, empty) {
     const list = $(id);
@@ -200,21 +235,26 @@ if (page === 'admin') {
 
   window.adminLogin = async () => {
     try {
-      const u = (await signInWithEmailAndPassword(auth, loginId($('adminName').value), $('adminPin').value)).user;
+      const u = (await signInWithEmailAndPassword(auth, $('adminName').value.trim(), $('adminPin').value)).user;
       if (u.uid !== ADMIN_UID) {
-        await signOut(auth);
-        return msg('adminMessage', 'This account is not the admin.', 'error');
+        const sessionCleared = await signOutSafely();
+        return msg('adminMessage',
+          'This account is not the admin.' +
+            (sessionCleared ? '' : ' Sign out failed; close this tab before continuing.'),
+          'error');
       }
       $('adminPin').value = '';
-      msg('adminMessage', 'Admin panel unlocked.', 'success');
-      showAdmin(true);
       await loadUsers();
+      setAdminContentVisible(true);
+      msg('adminMessage', 'Admin panel unlocked.', 'success');
     } catch (e) { msg('adminMessage', friendly(e), 'error'); }
   };
 
   window.confirmUser = async () => {
     const uid = $('pendingUserSelect').value;
     if (!uid || !residents[uid]) return msg('adminMessage', 'No resident is selected.', 'error');
+    if (residents[uid].status === 'approved')
+      return msg('adminMessage', residents[uid].name + ' is already approved.', 'error');
     try {
       await update(ref(db, 'users/' + uid), { status: 'approved' });
       residents[uid].status = 'approved';
@@ -236,28 +276,23 @@ if (page === 'admin') {
     } catch (e) { msg('adminMessage', friendly(e), 'error'); }
   };
 
-  $('changePinBtn').onclick = async () => {
-    const cur = $('curPin').value, n1 = $('newPin').value, n2 = $('newPin2').value;
-    const u = auth.currentUser;
-    if (!u || u.uid !== ADMIN_UID) return msg('pinMessage', 'Please log in as admin first.', 'error');
-    if (n1.length < 6 || n1.length > 10) return msg('pinMessage', 'New PIN must be 6 to 10 characters.', 'error');
-    if (n1 !== n2) return msg('pinMessage', 'The new PINs do not match.', 'error');
-    try {
-      await reauthenticateWithCredential(u, EmailAuthProvider.credential(u.email, cur));
-      await updatePassword(u, n1);
-      ['curPin', 'newPin', 'newPin2'].forEach(id => { $(id).value = ''; });
-      msg('pinMessage', 'PIN changed. Use the new PIN next time you log in.', 'success');
-    } catch (e) { msg('pinMessage', friendly(e), 'error'); }
-  };
-
   render();
-  onAuthStateChanged(auth, u => {
+  onAuthStateChanged(auth, async u => {
     if (u && u.uid === ADMIN_UID) {
-      msg('adminMessage', 'Signed in as admin.', 'success');
-      showAdmin(true);
-      loadUsers().catch(e => msg('adminMessage', friendly(e), 'error'));
+      try {
+        await loadUsers();
+        setAdminContentVisible(true);
+        msg('adminMessage', 'Signed in as admin.', 'success');
+      } catch (e) {
+        residents = {};
+        render();
+        setAdminContentVisible(false);
+        msg('adminMessage', friendly(e), 'error');
+      }
     } else {
-      showAdmin(false);
+      residents = {};
+      render();
+      setAdminContentVisible(false);
     }
   });
 }
@@ -267,7 +302,7 @@ if (page === 'activity') {
   document.body.style.visibility = 'hidden';
   addLogout();
   onAuthStateChanged(auth, async u => {
-    const deny = async () => { await signOut(auth).catch(() => {}); location.replace('userlogin.html'); };
+    const deny = async () => { await signOutSafely(); location.replace('userlogin.html'); };
     if (!u) return location.replace('userlogin.html');
     if (u.uid !== ADMIN_UID) {
       try {
