@@ -13,5 +13,5 @@ export const ADMIN_UID = "HlEts4SNo9NHaNH7q0ThSRBMPX93";
 
 // Admin logs in by typing this username plus a PIN (6+ digits). The page swaps it for the
 // private login address below, so no real email is needed. Create that user in Firebase.
-export const ADMIN_USERNAME = "admin";
-export const ADMIN_LOGIN_EMAIL = "doorvia-admin@example.com";
+export const ADMIN_USERNAME = "admin123";
+export const ADMIN_LOGIN_EMAIL = "projectsit34.com";
