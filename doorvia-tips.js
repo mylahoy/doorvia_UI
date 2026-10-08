@@ -7,7 +7,7 @@
   const TIPS = {
     login: [
       ['How do I create an account?',
-       'Enter your name, your email and a password of at least 6 characters, then click Create User. A verification email is sent to you.'],
+       'Enter your name, your email and a password of 6 to 10 characters, then click Create User. A verification email is sent to you.'],
       ['I did not get the verification email.',
        'Check your spam or junk folder. It comes from a noreply address and can take a few minutes. If it never arrives, ask the admin to remove your account so you can sign up again.'],
       ['It says my account is waiting for approval.',
