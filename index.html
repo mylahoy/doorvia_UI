@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="refresh" content="0; url=userlogin.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DoorVia</title>
   <link rel="stylesheet" href="brand.css" />
@@ -79,6 +78,18 @@
     <p>Loading DoorVia...</p>
     <span class="dot"></span>
   </div>
-  <script src="chat.js"></script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { firebaseConfig } from './firebase-config.js';
+
+    try {
+      initializeApp(firebaseConfig);
+      location.replace('userlogin.html');
+    } catch (error) {
+      console.error('Firebase initialization failed:', error);
+      document.querySelector('.loader-card p').textContent =
+        'Unable to connect. Check the Firebase configuration and try again.';
+    }
+  </script>
 </body>
 </html>
