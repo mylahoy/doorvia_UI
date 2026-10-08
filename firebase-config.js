@@ -9,7 +9,7 @@ export const firebaseConfig = {
 };
 
 // The one main admin (Firebase User UID).
-export const ADMIN_UID = "MB6EaHB9PaX8LaT5mK4V4Qz9ZPm2";
+export const ADMIN_UID = "HlEts4SNo9NHaNH7q0ThSRBMPX93";
 
 // Admin logs in by typing this username plus a PIN (6+ digits). The page swaps it for the
 // private login address below, so no real email is needed. Create that user in Firebase.
