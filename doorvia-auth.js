@@ -9,13 +9,15 @@ import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getDatabase, ref, get, set, update, remove }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-import { firebaseConfig, ADMIN_UID } from './firebase-config.js';
+import { firebaseConfig, ADMIN_UID, ADMIN_USERNAME, ADMIN_LOGIN_EMAIL } from './firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 const page = document.body.dataset.chatPage;
 const $ = id => document.getElementById(id);
+// Typing the admin username (e.g. "admin") logs in with the admin's private login address
+const loginId = v => (v.trim().toLowerCase() === ADMIN_USERNAME ? ADMIN_LOGIN_EMAIL : v.trim());
 
 localStorage.removeItem('doorviaUsers');   // old browser-only accounts (incl. default admin/1234)
 
@@ -70,7 +72,7 @@ if (page === 'login') {
   relabel('createPin', 'Password', 'At least 6 characters', 'password');
   $('createRole').closest('.field').style.display = 'none';       // residents only; one admin
   $('createPin').closest('.two-up').style.gridTemplateColumns = '1fr';
-  relabel('loginName', 'Email', 'name@example.com', 'email');
+  relabel('loginName', 'Email or admin username', 'name@example.com', 'text');
   relabel('loginPin', 'Password', 'Your password', 'password');
   const old = document.querySelector('.data-box');
   if (old) old.style.display = 'none';                            // no public user list
@@ -99,7 +101,7 @@ if (page === 'login') {
     const email = $('loginName').value.trim();
     const pw = $('loginPin').value;
     try {
-      const u = (await signInWithEmailAndPassword(auth, email, pw)).user;
+      const u = (await signInWithEmailAndPassword(auth, loginId(email), pw)).user;
       if (u.uid !== ADMIN_UID) {
         if (!u.emailVerified) {
           await signOut(auth);
@@ -119,8 +121,8 @@ if (page === 'login') {
 
 // ---------------- Admin page ----------------
 if (page === 'admin') {
-  relabel('adminName', 'Admin Email', 'admin@example.com', 'email');
-  relabel('adminPin', 'Admin Password', 'Password', 'password');
+  relabel('adminName', 'Admin Username', 'admin', 'text');
+  relabel('adminPin', 'Admin PIN', '6 or more digits', 'password');
   addLogout();
   let residents = {};
 
@@ -183,7 +185,7 @@ if (page === 'admin') {
 
   window.adminLogin = async () => {
     try {
-      const u = (await signInWithEmailAndPassword(auth, $('adminName').value.trim(), $('adminPin').value)).user;
+      const u = (await signInWithEmailAndPassword(auth, loginId($('adminName').value), $('adminPin').value)).user;
       if (u.uid !== ADMIN_UID) {
         await signOut(auth);
         return msg('adminMessage', 'This account is not the admin.', 'error');
