@@ -12,7 +12,475 @@
       --card: rgba(13, 23, 34, 0.92);
       --card-soft: rgba(18, 31, 42, 0.8);
       --line: rgba(255,255,255,0.08);
+      --text: #edf3ff;<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="brand.css" />
+  <style>
+    :root {
+      --bg-1: #09131e;
+      --bg-2: #0f1d2d;
+      --card: rgba(13, 23, 34, 0.92);
+      --card-soft: rgba(18, 31, 42, 0.8);
+      --line: rgba(255,255,255,0.08);
       --text: #edf3ff;
+      --muted: #9ab0c8;
+      --gold: #f8d38a;
+      --orange: #ff8a3d;
+      --purple: #7c6cf0;
+      --green: #62d39d;
+      --red: #ff6b6b;
+      --shadow: 0 18px 42px rgba(0,0,0,0.28);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(124, 108, 240, 0.18), transparent 28%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2));
+      color: var(--text);
+      padding: 24px;
+    }
+
+    .app {
+      width: min(900px, 100%);
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 26px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.8rem, 2vw, 2.6rem);
+      letter-spacing: 0.04em;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 20px;
+      width: 100%;
+      text-align: center;
+    }
+
+    .panel h2 {
+      margin: 0 0 16px;
+      font-size: 1.05rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 0.72rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    input, select, button {
+      font: inherit;
+    }
+
+    input, select {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 12px 14px;
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: rgba(124, 108, 240, 0.9);
+      box-shadow: 0 0 0 3px rgba(124, 108, 240, 0.18);
+    }
+
+    .resident-select {
+      background: rgba(98, 211, 157, 0.14);
+      border-color: rgba(98, 211, 157, 0.52);
+      color: #caffdc;
+    }
+
+    .resident-select:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(98, 211, 157, 0.2);
+    }
+
+    .resident-select option {
+      background: var(--bg-2);
+      color: var(--text);
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 18px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--orange), #ffb36b);
+      color: #1a130d;
+    }
+
+    .ghost {
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .danger {
+      background: rgba(255, 107, 107, 0.12);
+      color: #ff9d9d;
+      border: 1px solid rgba(255, 107, 107, 0.25);
+    }
+
+    .two-up {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .message {
+      min-height: 20px;
+      margin-top: 12px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .message.error { color: var(--red); }
+    .message.success { color: var(--green); }
+
+    .data-box {
+      margin-top: 20px;
+      background: var(--card-soft);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .data-box h3 {
+      margin: 0 0 12px;
+      font-size: 0.82rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    .user-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .user-list li {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    .role-pill {
+      border-radius: 999px;
+      padding: 5px 8px;
+      font-size: 0.7rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 700;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .role-admin { background: rgba(255,107,107,0.12); color: #ff9191; }
+    .role-user { background: rgba(98,211,157,0.12); color: #9effbf; }
+
+    @media (max-width: 700px) {
+      .two-up { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body data-chat-page="admin">
+  <div class="app">
+    <div class="brand-lockup" aria-label="DoorVia">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span><strong class="brand-name">Door<span>Via</span></strong><small class="brand-kicker"> Secure access</small></span>
+    </div>
+    <div class="topbar">
+      <div>
+        <h1>DoorVia Admin</h1>
+        <p>Resident approval and access management for the main door</p>
+      </div>
+      <div style="display:flex; gap:12px; flex-wrap:wrap;">
+        <button class="ghost" type="button" onclick="window.location.href='userlogin.html'">Home</button>
+        <button class="ghost" type="button" onclick="window.location.href='userlogin.html'">Back to Access</button>
+      </div>
+    </div>
+
+    <section class="panel">
+      <h2>Admin Login</h2>
+      <div class="field">
+        <label for="adminName">Admin Name</label>
+        <input id="adminName" type="text" placeholder="Enter admin name" />
+      </div>
+      <div class="field">
+        <label for="adminPin">Admin PIN</label>
+        <input id="adminPin" type="password" maxlength="4" placeholder="4-digit PIN" />
+      </div>
+      <button class="primary" type="button" onclick="adminLogin()">Unlock Admin Panel</button>
+      <div id="adminMessage" class="message" aria-live="polite"></div>
+    </section>
+
+    <section class="panel" style="margin-top: 20px;">
+      <h2>User Management</h2>
+      <div class="field">
+        <label for="pendingUserSelect">Select Resident</label>
+        <select id="pendingUserSelect" class="resident-select"></select>
+      </div>
+      <div class="two-up">
+        <button class="primary" type="button" onclick="confirmUser()">Confirm User</button>
+        <button class="danger" type="button" onclick="deleteUser()">Delete User</button>
+      </div>
+    </section>
+
+    <div class="data-box" style="margin-top: 20px;">
+      <h3>Approved Residents</h3>
+      <ul id="approvedUserList" class="user-list"></ul>
+    </div>
+
+    <div class="data-box">
+      <h3>All Users</h3>
+      <ul id="userList" class="user-list"></ul>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'doorviaUsers';
+
+    function ensureDefaultAdmin() {
+      const users = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      const hasAdmin = users.some(user => user.role === 'admin');
+
+      if (!hasAdmin) {
+        users.push({ name: 'admin', pin: '1234', role: 'admin', status: 'approved' });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+      }
+    }
+
+    function getUsers() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      } catch (error) {
+        return [];
+      }
+    }
+
+    function saveUsers(users) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+    }
+
+    function setMessage(id, text, type) {
+      const el = document.getElementById(id);
+      el.textContent = text;
+      el.className = 'message ' + (type || '');
+    }
+
+    function updatePendingUserSelect() {
+      const users = getUsers();
+      const select = document.getElementById('pendingUserSelect');
+      const residentUsers = users.filter(user => user.role !== 'admin');
+
+      select.innerHTML = '';
+
+      if (!residentUsers.length) {
+        const option = document.createElement('option');
+        option.textContent = 'No residents available';
+        option.value = '';
+        select.appendChild(option);
+        return;
+      }
+
+      residentUsers.forEach(user => {
+        const option = document.createElement('option');
+        option.value = user.name;
+        option.textContent = `${user.name} (${user.status || 'pending'})`;
+        select.appendChild(option);
+      });
+    }
+
+    function renderApprovedUsers() {
+      const users = getUsers();
+      const list = document.getElementById('approvedUserList');
+      const approvedUsers = users.filter(user => user.role !== 'admin' && user.status === 'approved');
+      list.innerHTML = '';
+
+      if (!approvedUsers.length) {
+        list.innerHTML = '<li><span>No approved residents yet.</span><span class="role-pill role-user">--</span></li>';
+        return;
+      }
+
+      approvedUsers.forEach(user => {
+        const item = document.createElement('li');
+        item.innerHTML = `
+          <span>${user.name}</span>
+          <span class="role-pill role-user">Approved</span>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    function renderUsers() {
+      const users = getUsers();
+      const list = document.getElementById('userList');
+      list.innerHTML = '';
+
+      if (!users.length) {
+        list.innerHTML = '<li><span>No users created yet.</span><span class="role-pill role-user">--</span></li>';
+      } else {
+        users.forEach(user => {
+          const item = document.createElement('li');
+          item.innerHTML = `
+            <span>${user.name} ${user.status && user.status !== 'approved' ? `(${user.status})` : ''}</span>
+            <span class="role-pill ${user.role === 'admin' ? 'role-admin' : 'role-user'}">${user.role === 'admin' ? 'Admin' : user.status === 'approved' ? 'Approved' : 'Pending'}</span>
+          `;
+          list.appendChild(item);
+        });
+      }
+
+      renderApprovedUsers();
+      updatePendingUserSelect();
+    }
+
+    function adminLogin() {
+      const adminName = document.getElementById('adminName').value.trim();
+      const adminPin = document.getElementById('adminPin').value.trim();
+      const users = getUsers();
+      const match = users.find(user => user.role === 'admin' && user.name.toLowerCase() === adminName.toLowerCase() && user.pin === adminPin);
+
+      if (!match) {
+        setMessage('adminMessage', 'Admin access denied. Use the admin account setup.', 'error');
+        return;
+      }
+
+      setMessage('adminMessage', `Admin panel unlocked for ${match.name}.`, 'success');
+      document.getElementById('adminName').value = '';
+      document.getElementById('adminPin').value = '';
+      updatePendingUserSelect();
+    }
+
+    function confirmUser() {
+      const selectedName = document.getElementById('pendingUserSelect').value;
+      const users = getUsers();
+      const userIndex = users.findIndex(user => user.name.toLowerCase() === selectedName.toLowerCase());
+
+      if (userIndex === -1 || !selectedName) {
+        setMessage('adminMessage', 'No user is selected to confirm.', 'error');
+        return;
+      }
+
+      if (users[userIndex].role === 'admin') {
+        setMessage('adminMessage', 'Admin users are not eligible for confirmation.', 'error');
+        return;
+      }
+
+      if (users[userIndex].status === 'approved') {
+        setMessage('adminMessage', `${users[userIndex].name} is already approved.`, 'error');
+        return;
+      }
+
+      users[userIndex].status = 'approved';
+      saveUsers(users);
+      renderUsers();
+      setMessage('adminMessage', `${users[userIndex].name} has been confirmed by admin.`, 'success');
+    }
+
+    function deleteUser() {
+      const selectedName = document.getElementById('pendingUserSelect').value;
+      const users = getUsers();
+      const filteredUsers = users.filter(user => user.name.toLowerCase() !== selectedName.toLowerCase());
+
+      if (!selectedName || filteredUsers.length === users.length) {
+        setMessage('adminMessage', 'No user is selected to delete.', 'error');
+        return;
+      }
+
+      const selectedUser = users.find(user => user.name.toLowerCase() === selectedName.toLowerCase());
+      if (selectedUser.role === 'admin') {
+        setMessage('adminMessage', 'Admin users cannot be deleted.', 'error');
+        return;
+      }
+
+      const shouldDelete = window.confirm(`Delete ${selectedName}? This action cannot be undone.`);
+      if (!shouldDelete) {
+        setMessage('adminMessage', `${selectedName} was not deleted.`, '');
+        return;
+      }
+
+      saveUsers(filteredUsers);
+      renderUsers();
+      setMessage('adminMessage', `${selectedName} was deleted successfully.`, 'success');
+    }
+
+    ensureDefaultAdmin();
+    renderUsers();
+  </script>
+    <script type="module" src="doorvia-auth.js?v=2"></script>
+  <script src="doorvia-tips.js"></script>
+  <script src="doorvia-status.js"></script>
+</body>
+</html>
       --muted: #9ab0c8;
       --gold: #f8d38a;
       --orange: #ff8a3d;
