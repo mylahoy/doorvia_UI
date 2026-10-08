@@ -7,9 +7,9 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
          sendEmailVerification, signOut, onAuthStateChanged }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getDatabase, ref, get, set, update, remove }
+import { getDatabase, ref, get, set, update, remove, query, orderByChild, equalTo, limitToFirst }
   from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-import { firebaseConfig, ADMIN_UID } from './firebase-config.js';
+import { firebaseConfig, ADMIN_UID, ADMIN_USERNAME, ADMIN_LOGIN_EMAIL } from './firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -31,6 +31,8 @@ function msg(id, text, type) {
 }
 
 function friendly(e) {
+  if (e.code === 'USERNAME_NOT_FOUND') return 'Username not found. Check the spelling or use your email.';
+  if (e.code === 'USERNAME_AMBIGUOUS') return 'That name matches more than one account. Please log in with your email.';
   const c = (e.code || '') + ' ' + (e.message || '');
   if (c.includes('email-already-in-use')) return 'That email is already registered.';
   if (c.includes('weak-password')) return 'Password must be at least 6 characters.';
@@ -41,6 +43,47 @@ function friendly(e) {
   if (c.includes('network')) return 'No internet connection.';
   if (c.includes('PERMISSION_DENIED')) return 'Not allowed by the database rules.';
   return e.message || 'Something went wrong.';
+}
+
+async function resolveLoginEmail(identifier) {
+  const value = identifier.trim();
+  if (value.includes('@')) return value;
+
+  if (value.toLowerCase() === ADMIN_USERNAME.toLowerCase()) {
+    return ADMIN_LOGIN_EMAIL;
+  }
+
+  const normalized = value.toLowerCase();
+  const usernameResults = await get(query(
+    ref(db, 'users'),
+    orderByChild('username'),
+    equalTo(normalized),
+    limitToFirst(2)
+  ));
+  let matches = Object.entries(usernameResults.val() || {});
+
+  if (!matches.length) {
+    const legacyNameResults = await get(query(
+      ref(db, 'users'),
+      orderByChild('name'),
+      equalTo(value),
+      limitToFirst(2)
+    ));
+    matches = Object.entries(legacyNameResults.val() || {});
+  }
+
+  if (!matches.length) {
+    throw Object.assign(new Error('No account matches that username.'), { code: 'USERNAME_NOT_FOUND' });
+  }
+  if (matches.length > 1) {
+    throw Object.assign(new Error('More than one account matches that name.'), { code: 'USERNAME_AMBIGUOUS' });
+  }
+
+  const email = matches[0][1].email;
+  if (!email) {
+    throw new Error('This account has no email address. Please contact the admin.');
+  }
+  return email;
 }
 
 async function signOutSafely() {
@@ -90,7 +133,7 @@ if (page === 'login') {
   relabel('createPin', 'Password', 'At least 6 characters', 'password');
   $('createRole').closest('.field').style.display = 'none';       // residents only; one admin
   $('createPin').closest('.two-up').style.gridTemplateColumns = '1fr';
-  relabel('loginName', 'Email', 'name@example.com', 'email');
+  relabel('loginName', 'Email or username', 'Email or resident name', 'text');
   relabel('loginPin', 'Password', 'Your password', 'password');
   const old = document.querySelector('.data-box');
   if (old) old.style.display = 'none';                            // no public user list
@@ -109,7 +152,7 @@ if (page === 'login') {
       const cred = await createUserWithEmailAndPassword(auth, email, pw);
       accountCreated = true;
       await set(ref(db, 'users/' + cred.user.uid),
-        { name, email, role: 'resident', status: 'pending', createdAt: Date.now() });
+        { name, username: name.toLowerCase(), email, role: 'resident', status: 'pending', createdAt: Date.now() });
       profileSaved = true;
       await sendEmailVerification(cred.user);
       if (!(await signOutSafely())) {
@@ -141,10 +184,13 @@ if (page === 'login') {
   };
 
   window.loginUser = async () => {
-    const email = $('loginName').value.trim();
+    const identifier = $('loginName').value.trim();
     const pw = $('loginPin').value;
+    if (!identifier) return msg('loginMessage', 'Enter your email or username.', 'error');
+    if (!pw) return msg('loginMessage', 'Enter your password.', 'error');
     let authenticated = false;
     try {
+      const email = await resolveLoginEmail(identifier);
       const u = (await signInWithEmailAndPassword(auth, email, pw)).user;
       authenticated = true;
       if (u.uid !== ADMIN_UID) {
@@ -177,7 +223,7 @@ if (page === 'login') {
 
 // ---------------- Admin page ----------------
 if (page === 'admin') {
-  relabel('adminName', 'Admin Email', 'admin@example.com', 'email');
+  relabel('adminName', 'Admin Email or username', 'Email or admin username', 'text');
   relabel('adminPin', 'Admin Password', 'Password', 'password');
   addLogout();
   let residents = {};
@@ -235,7 +281,8 @@ if (page === 'admin') {
 
   window.adminLogin = async () => {
     try {
-      const u = (await signInWithEmailAndPassword(auth, $('adminName').value.trim(), $('adminPin').value)).user;
+      const email = await resolveLoginEmail($('adminName').value);
+      const u = (await signInWithEmailAndPassword(auth, email, $('adminPin').value)).user;
       if (u.uid !== ADMIN_UID) {
         const sessionCleared = await signOutSafely();
         return msg('adminMessage',
