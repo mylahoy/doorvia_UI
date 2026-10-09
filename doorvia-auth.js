@@ -53,37 +53,16 @@ async function resolveLoginEmail(identifier) {
     return ADMIN_LOGIN_EMAIL;
   }
 
-  const normalized = value.toLowerCase();
-  const usernameResults = await get(query(
-    ref(db, 'users'),
-    orderByChild('username'),
-    equalTo(normalized),
-    limitToFirst(2)
-  ));
-  let matches = Object.entries(usernameResults.val() || {});
-
-  if (!matches.length) {
-    const legacyNameResults = await get(query(
-      ref(db, 'users'),
-      orderByChild('name'),
-      equalTo(value),
-      limitToFirst(2)
-    ));
-    matches = Object.entries(legacyNameResults.val() || {});
-  }
-
-  if (!matches.length) {
+  const snap = await get(ref(db, 'usernames/' + usernameKey(value)));
+  const email = snap.exists() && snap.val().email;
+  if (!email) {
     throw Object.assign(new Error('No account matches that username.'), { code: 'USERNAME_NOT_FOUND' });
   }
-  if (matches.length > 1) {
-    throw Object.assign(new Error('More than one account matches that name.'), { code: 'USERNAME_AMBIGUOUS' });
-  }
-
-  const email = matches[0][1].email;
-  if (!email) {
-    throw new Error('This account has no email address. Please contact the admin.');
-  }
   return email;
+}
+
+function usernameKey(name) {
+  return name.trim().toLowerCase().replace(/[.#$\[\]\/\s]+/g, '_');
 }
 
 async function signOutSafely() {
@@ -152,8 +131,13 @@ if (page === 'login') {
       const cred = await createUserWithEmailAndPassword(auth, email, pw);
       accountCreated = true;
       await set(ref(db, 'users/' + cred.user.uid),
-        { name, username: name.toLowerCase(), email, role: 'resident', status: 'pending', createdAt: Date.now() });
+        { name, email, role: 'resident', status: 'pending' });
       profileSaved = true;
+      try {
+        await set(ref(db, 'usernames/' + usernameKey(name)), { uid: cred.user.uid, email });
+      } catch (usernameError) {
+        console.warn('Username lookup entry not saved; email login still works:', usernameError);
+      }
       await sendEmailVerification(cred.user);
       if (!(await signOutSafely())) {
         return msg('createMessage',
@@ -208,6 +192,19 @@ if (page === 'login') {
             'Your account is waiting for admin approval.' +
               (sessionCleared ? '' : ' Sign out failed; close this tab before continuing.'),
             'error');
+        }
+        // Older accounts may lack a username lookup entry; create it so username login works.
+        const profile = snap.val();
+        const uname = profile.username || profile.name;
+        if (uname) {
+          try {
+            const key = usernameKey(uname);
+            if (!(await get(ref(db, 'usernames/' + key))).exists()) {
+              await set(ref(db, 'usernames/' + key), { uid: u.uid, email: u.email });
+            }
+          } catch (lookupError) {
+            console.warn('Username lookup entry not saved:', lookupError);
+          }
         }
       }
       msg('loginMessage', 'Welcome. Access approved.', 'success');
